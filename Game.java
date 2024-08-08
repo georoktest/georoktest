@@ -1,3 +1,9 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.image.BufferStrategy;
+import java.util.ArrayList;
+import java.util.List;
+
 public class Game extends Canvas implements Runnable {
     private static final int WIDTH = 640;
     private static final int HEIGHT = 480;
@@ -9,12 +15,18 @@ public class Game extends Canvas implements Runnable {
     private boolean running = false;
 
     private GameMap gameMap;
+    private List<Siedler> settlers;
 
     public Game() {
         gameMap = new GameMap(20, 20);
         gameMap.placeBuilding(5, 5, new Building(Building.BuildingType.HOUSE));
         gameMap.placeBuilding(6, 6, new Building(Building.BuildingType.FARM));
         gameMap.placeBuilding(7, 7, new Building(Building.BuildingType.MINE));
+
+        settlers = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            settlers.add(new Siedler((int) (Math.random() * 20), (int) (Math.random() * 20)));
+        }
 
         JFrame frame = new JFrame("Siedler 4 Clone");
         frame.add(this);
@@ -81,7 +93,10 @@ public class Game extends Canvas implements Runnable {
         }
     }
 
-    private void update() {
+    public void update() {
+        for (Siedler settler : settlers) {
+            settler.update();
+        }
         // Hier die Spiel-Logik aktualisieren
     }
 
@@ -97,6 +112,7 @@ public class Game extends Canvas implements Runnable {
 
         // Hier das Spiel rendern
         renderMap(g);
+        renderSettlers(g);
 
         g.dispose();
         bs.show();
@@ -127,3 +143,34 @@ public class Game extends Canvas implements Runnable {
                 g.fillRect(x * 32, y * 32, 32, 32);
 
                 // Gebäude zeichnen
+                Building building = tile.getBuilding();
+                if (building != null) {
+                    switch (building.getType()) {
+                        case HOUSE:
+                            g.setColor(Color.RED);
+                            break;
+                        case FARM:
+                            g.setColor(Color.YELLOW);
+                            break;
+                        case MINE:
+                            g.setColor(Color.DARK_GRAY);
+                            break;
+                    }
+                    g.fillRect(x * 32 + 8, y * 32 + 8, 16, 16); // Kleinere Quadrate für Gebäude
+                }
+            }
+        }
+    }
+
+    private void renderSettlers(Graphics g) {
+        for (Siedler settler : settlers) {
+            g.setColor(Color.WHITE);
+            g.fillRect(settler.getX() * 32 + 8, settler.getY() * 32 + 8, 16, 16);
+        }
+    }
+
+    public static void main(String[] args) {
+        Game game = new Game();
+        game.start();
+    }
+}
