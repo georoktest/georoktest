@@ -1,13 +1,11 @@
-import javax.swing.*;
-import java.awt.*;
-import java.awt.image.BufferStrategy;
-
 public class Game extends Canvas implements Runnable {
     private static final int WIDTH = 640;
     private static final int HEIGHT = 480;
     private static final int FPS = 60;
 
     private Thread thread;
+    private Thread logicThread;
+    private Thread soundThread;
     private boolean running = false;
 
     private GameMap gameMap;
@@ -31,7 +29,11 @@ public class Game extends Canvas implements Runnable {
         if (running) return;
         running = true;
         thread = new Thread(this);
+        logicThread = new Thread(new GameLogic(this));
+        soundThread = new Thread(new SoundManager());
         thread.start();
+        logicThread.start();
+        soundThread.start();
     }
 
     public synchronized void stop() {
@@ -39,9 +41,15 @@ public class Game extends Canvas implements Runnable {
         running = false;
         try {
             thread.join();
+            logicThread.join();
+            soundThread.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    public boolean isRunning() {
+        return running;
     }
 
     @Override
@@ -119,27 +127,3 @@ public class Game extends Canvas implements Runnable {
                 g.fillRect(x * 32, y * 32, 32, 32);
 
                 // Gebäude zeichnen
-                Building building = tile.getBuilding();
-                if (building != null) {
-                    switch (building.getType()) {
-                        case HOUSE:
-                            g.setColor(Color.RED);
-                            break;
-                        case FARM:
-                            g.setColor(Color.YELLOW);
-                            break;
-                        case MINE:
-                            g.setColor(Color.DARK_GRAY);
-                            break;
-                    }
-                    g.fillRect(x * 32 + 8, y * 32 + 8, 16, 16); // Kleinere Quadrate für Gebäude
-                }
-            }
-        }
-    }
-
-    public static void main(String[] args) {
-        Game game = new Game();
-        game.start();
-    }
-}
